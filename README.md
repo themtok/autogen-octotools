@@ -70,6 +70,7 @@ This will start the runtime, register all tools, and demonstrate a sample agent 
 ## Disclaimer
 
 Many parts of implementations (like prompts) were inspired by original Octotools implemenation - [octotools](https://github.com/octotools/octotools)
+Project does not implement Task-specific Toolset Optimization descibed in original paper- tools are selcted autonomously by planner agent from complete polulation of tools.
 
 ## References
 
