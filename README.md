@@ -67,6 +67,10 @@ This will start the runtime, register all tools, and demonstrate a sample agent 
 1. Create a new tool in the `tools/` directory.
 2. Register the tool in your script using `runtime.register_tool()`.
 
+## Disclaimer
+
+Many parts of implementations (like prompts) were inspired by original Octotools implemenation - [octotools](https://github.com/octotools/octotools)
+
 ## References
 
 - Paper: [OctoTools: An Agentic Framework with Extensible Tools for Complex Reasoning](https://arxiv.org/abs/2502.11271)
