@@ -1,4 +1,4 @@
-# OctoTools-Autogen: Agentic Framework Implementation
+# Autogen-Octotools: Agentic Framework Implementation
 
 This project is an implementation of the agentic framework described in the paper:
 
