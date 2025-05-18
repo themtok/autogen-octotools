@@ -43,6 +43,7 @@ OctoTools introduces standardized tool cards, a planner for high- and low-level 
    ```
 
 3. (Optional) Set up environment variables in a `.env` file for API keys and configuration.
+    Values needed: OPENROUTER_API_KEY,OPENROUTER_BASE_PATH
 
 ## Usage
 
