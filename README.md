@@ -1,3 +1,5 @@
+中文版请参阅 [README_zh.md](README_zh.md)
+
 # Autogen-Octotools: Agentic Framework Implementation
 
 This project is an implementation of the agentic framework described in the paper:
