@@ -6,6 +6,8 @@ This project is an implementation of the agentic framework described in the pape
 
 > *Pan Lu, Bowen Chen, Sheng Liu, Rahul Thapa, Joseph Boen, James Zou (2025)*
 
+Original implemetation: GitHub Repo [octotools](https://github.com/octotools/octotools?tab=readme-ov-file)
+
 ## Overview
 
 This repository provides a modular, extensible agentic framework for complex reasoning, inspired by the OctoTools paper. The implementation is built on top of the [Microsoft AutoGen framework](https://microsoft.github.io/autogen/stable/), leveraging its robust agent orchestration and tool integration capabilities.
