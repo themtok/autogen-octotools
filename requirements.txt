@@ -16,7 +16,7 @@ decorator==5.2.1
 Deprecated==1.2.18
 distro==1.9.0
 dotenv==0.9.9
-duckduckgo_search==2025.4.1
+duckduckgo_search
 executing==2.2.0
 h11==0.14.0
 htmldate==1.9.3

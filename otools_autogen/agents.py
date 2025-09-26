@@ -26,7 +26,8 @@ from .utils import only_direct, image_to_base64_inline
 
 llm_logger = logging.getLogger("otools_autogen_llm")
 logger = logging.getLogger("otools_autogen")
-
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())
 
 
 if TYPE_CHECKING:
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 @dataclass
 class QueryAnalyzerRequest():
     user_query: str
-    images: list[str]
+    image_paths: list[str]
     image_infos: list[Dict[str, Any]]
     all_tools_names: list[str]
     all_tools_medatada: list[str]
@@ -217,13 +218,15 @@ class Orchestrator(BaseAgent):
         all_tools_metadata = [tool.get_metadata() for tool in all_tools.values()]
         qar = QueryAnalyzerRequest(
             user_query=message.message, 
-            images=message.files, 
+            image_paths=message.files, 
             image_infos=image_infos,
             all_tools_names=all_tools_names, 
             all_tools_medatada=all_tools_metadata
             )
+        start_time = datetime.now()
+        logger.debug(f"Sending message to QueryAnalyzer")
         query_analysis:QueryAnalysisLLMResponse = await self.send_message(qar, AgentId(type="QueryAnalyzer", key=session_id))
-
+        logger.debug(f"Query analysis took {datetime.now() - start_time}")
         step_no = 0
         actions_history = {}
         conclusion = False
@@ -239,7 +242,10 @@ class Orchestrator(BaseAgent):
                 aviailable_tools_metadata=[tool.get_metadata() for tool in self._manager.get_tool_cards().values()],
                 actions_history=actions_history
             )
+            start_time = datetime.now()
+            logger.debug(f"Sending message to ActionPredictor")
             action_predictor_response:ActionPredictonLLMResponse = await self.send_message(action_predictor_request, AgentId(type="ActionPredictor", key=session_id))
+            logger.debug(f"Action prediction took {datetime.now() - start_time}")
             selected_tool_card:ToolCard = self._manager.get_tool_cards()[action_predictor_response.tool_name]
             selected_tool_id = selected_tool_card.tool_id
             selected_tool_metadata = selected_tool_card.get_metadata()
@@ -311,7 +317,10 @@ class Orchestrator(BaseAgent):
                 query_analysis=query_analysis,
                 memory=actions_history
             )
+            logger.debug(f"Sending message to ContextVerifier")
+            start_time = datetime.now()
             context_verifier_result = await self.send_message(cvr, AgentId(type="ContextVerifier", key=session_id))
+            logger.debug(f"Context verification took {datetime.now() - start_time}")
             if context_verifier_result.stop_signal:
                 conclusion = True
                 break
@@ -396,7 +405,8 @@ Please present your analysis in a clear, structured format.
         llm_logger.debug(f"[QueryAnalyzer] LLM prompt: {query_prompt}")
 
         client = AsyncOpenAI(api_key=os.getenv("OPENROUTER_API_KEY"), base_url=os.getenv("OPENROUTER_BASE_PATH"))
-        images_part = [{"type": "image_url", "image_url": {"url": image_to_base64_inline(filename)}} for filename in message.images]
+        images_part = [{"type": "image_url", "image_url": {"url": image_to_base64_inline(filename)}} for 
+                       filename in (message.image_paths if message.image_paths is not None and len(message.image_paths)>0 else [])]
         
         input=[{
                 "role": "user",
@@ -720,7 +730,8 @@ Response Format:
         llm_logger.debug(f"[ContextVerifier] LLM prompt: {query_prompt}")
 
         client = AsyncOpenAI(api_key=os.getenv("OPENROUTER_API_KEY"), base_url=os.getenv("OPENROUTER_BASE_PATH"))
-        images_part = [{"type": "image_url", "image_url": {"url": image_to_base64_inline(fnmae)}} for fnmae in message.images]
+        images_part = [{"type": "image_url", "image_url": {"url": image_to_base64_inline(fnmae)}} 
+                       for fnmae in (message.image_paths if  message.image_paths is not None and len(message.image_paths)>0 else [])]
 
         input=[{
                 "role": "user",
@@ -806,7 +817,8 @@ Answer:
    
         llm_logger.debug(f"[FinalOutputAgent] LLM prompt: {query_prompt}")
         client = AsyncOpenAI(api_key=os.getenv("OPENROUTER_API_KEY"), base_url=os.getenv("OPENROUTER_BASE_PATH"))
-        images_part = [{"type": "image_url", "image_url": {"url": image_to_base64_inline(fnmae)}} for fnmae in message.images]
+        images_part = [{"type": "image_url", "image_url": {"url": image_to_base64_inline(fnmae)}} for fnmae in 
+                       (message.image_paths if message.image_paths is not None and len(message.image_paths)>0 else [])]
         
         input=[{
                 "role": "user",

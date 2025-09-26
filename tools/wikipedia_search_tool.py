@@ -6,12 +6,12 @@ import wikipedia
 
 class WikipediaSearchRequest(BaseModel):
     query: str
-    max_length_of_response:int=2000
     
 class WikipediaSearchResponse(BaseModel):
     success: bool
-    search_results: str
+    search_results: list[str]
     
+
 
 class WikipediaSearch(Tool):
         @property
@@ -19,14 +19,14 @@ class WikipediaSearch(Tool):
             return ToolCard(
                 tool_id="WikipediaSearchTool",
                 name="Wikipedia search tool",
-                description="Tool for searching wikipedia.",
+                description="Tool for searching wikipedia terms. Returns list of page ids matching tool input query that then can be retreived using WikipediaRetrieveTool",
                 inputs=WikipediaSearchRequest,
                 outputs=WikipediaSearchResponse,
                 user_metadata={},
                 demo_input=[WikipediaSearchRequest(
-                    query="Python"
+                    query="Python programming language"
                 ), WikipediaSearchRequest(
-                    query="Washington"
+                    query="Washington state"
                 )]
                             
                     
@@ -36,9 +36,37 @@ class WikipediaSearch(Tool):
             search_results = wikipedia.search(inputs.query)
             if not search_results:
                 return WikipediaSearchResponse(success=False, search_results=None)
-            page = wikipedia.page(search_results[0])
-            text = page.content
+            
+            return WikipediaSearchResponse(success=True, search_results=search_results)
+        
+        
+class WikipediaRetrieveRequest(BaseModel):
+    query: str
 
-            if inputs.max_length_of_response is not None:
-                text = text[:inputs.max_length_of_response]
-            return WikipediaSearchResponse(success=True, search_results=text)
+class WikipediaRetrieveResponse(BaseModel):
+    success: bool
+    page_content: str
+
+
+class WikipediaRetrieveTool(Tool):
+        @property
+        def card(self) -> ToolCard:
+            return ToolCard(
+                tool_id="WikipediaRetrieveTool",
+                name="Wikipedia retrieve tool",
+                description="Tool for retrieving wikipedia page content. Returns the content of the wikipedia page requested.",
+                inputs=WikipediaRetrieveRequest,
+                outputs=WikipediaRetrieveResponse,
+                user_metadata={},
+                demo_input=[WikipediaRetrieveRequest(
+                    query="Python"
+                ), WikipediaRetrieveRequest(
+                    query="Washington"
+                )]
+                            
+                    
+            )
+
+        async def run(self, inputs: WikipediaRetrieveRequest) -> WikipediaRetrieveResponse:
+            page_content = wikipedia.page(inputs.query, auto_suggest=False).content
+            return WikipediaRetrieveResponse(success=True, page_content=page_content)

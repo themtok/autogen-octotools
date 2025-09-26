@@ -57,6 +57,7 @@ The content of the page is: {r}"""
         client = AsyncOpenAI(api_key=os.getenv("OPENROUTER_API_KEY"), base_url=os.getenv("OPENROUTER_BASE_PATH"))
         input=[{"role": "user","content": [{"type": "text", "text": prompt}]}]
         completion = await client.chat.completions.create(
+            
             model=os.getenv("PAGE_CONTENT_EXTRACTOR_SUMMARIZATION_MODEL"),
             messages=input)
         llm_response = completion.choices[0].message.content
