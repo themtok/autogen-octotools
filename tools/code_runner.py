@@ -54,11 +54,11 @@ class PythonCodeRunnerTool(Tool):
         work_dir.mkdir(exist_ok=True)
         async with DockerCommandLineCodeExecutor(work_dir=work_dir, image="base-python:libs") as executor:  # type: ignore
             result = await executor.execute_code_blocks(
-            code_blocks=[
-                CodeBlock(language="python", code=inputs.code),
+                code_blocks=[
+                    CodeBlock(language="python", code=inputs.code),
 
-            ],
-            cancellation_token=CancellationToken(),
-        )
+                ],
+                cancellation_token=CancellationToken(),
+            )
         return PythonCodeRunnerResponse(success=result.exit_code==0, response=result.output, error=result.output if result.exit_code!=0 else None)
         

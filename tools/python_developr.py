@@ -63,11 +63,12 @@ class PythonDeveloperTool(Tool):
             {"role": "developer","content": [{"type": "text", "text": persona_prompt}]},
             {"role": "user","content": [{"type": "text", "text": prompt}]}
             ]
-        completion = await client.chat.completions.create(
+        response = client.responses.create(
             model="gpt-5-codex",
-            messages=input)
-        llm_response = completion.choices[0].message.content
-        
+            input=prompt
+        )
+        response_output_message = [x for x in response.output if x.type == "message"]
+        llm_response = response_output_message[0].content[0].text
         llm_logger.debug(f"[PythonCodeRunnerTool] LLM response: {llm_response}")
         return PythonDeveloperResponse.model_validate({
             "success": True,
