@@ -18,6 +18,10 @@ import json
 
 from .tools import ToolCard, Tool
 
+from typing import Generic, TypeVar
+from pydantic import BaseModel
+from pydantic.generics import GenericModel
+
 
 
 
@@ -28,6 +32,7 @@ llm_logger = logging.getLogger("otools_autogen_llm")
 logger = logging.getLogger("otools_autogen")
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
+llm_logger.setLevel(logging.DEBUG)
 
 
 if TYPE_CHECKING:
@@ -67,6 +72,7 @@ class CommandGeneratorRequest():
     tool_name: str
     tool_metadata: str
     context: str
+    reqd_type: Any = None
 
 
     
@@ -113,10 +119,12 @@ class QueryAnalysisLLMResponse(BaseModel):
     {self.additional_considerations}
     """
 
-class ToolCommandLLMResponse(BaseModel):
+T = TypeVar("T")
+
+class ToolCommandLLMResponse(GenericModel, Generic[T]):
     analysis: str
     explanation: str
-    argument: str
+    argument: T
 
 class ActionPredictonLLMResponse(BaseModel):
     justification: str
@@ -249,6 +257,7 @@ class Orchestrator(BaseAgent):
             selected_tool_card:ToolCard = self._manager.get_tool_cards()[action_predictor_response.tool_name]
             selected_tool_id = selected_tool_card.tool_id
             selected_tool_metadata = selected_tool_card.get_metadata()
+            reqd_type = selected_tool_card.inputs
             cgr = CommandGeneratorRequest(
                 initial_query=message.message,
                 query_analysis=query_analysis,
@@ -256,7 +265,8 @@ class Orchestrator(BaseAgent):
                 sub_goal=action_predictor_response.sub_goal,
                 tool_name=action_predictor_response.tool_name,
                 tool_metadata=selected_tool_metadata,
-                image_paths=message.files
+                image_paths=message.files,
+                reqd_type=reqd_type
             )
             command_response:ToolCommandLLMResponse = await self.send_message(cgr, AgentId(type="CommandGenerator", key=session_id))
             try:
@@ -653,11 +663,12 @@ Remember: Your <argument> field MUST be valid json object"""
                     {"type": "text", "text": query_prompt},
                 ]
             }]
+        reqd_command_type = message.reqd_type
         start_time = datetime.now()
         completion = await client.beta.chat.completions.parse(
             model=os.getenv("OTOOLS_MODEL"),
             messages=input,
-            response_format=ToolCommandLLMResponse)
+            response_format=ToolCommandLLMResponse[reqd_command_type])
         logger.info(f"Command generation took {datetime.now() - start_time}")
         llm_response = completion.choices[0].message.parsed
         llm_logger.debug(f"[CommandGenerator] LLM response: {llm_response}")
