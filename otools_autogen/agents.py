@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
 import logging
-from pydantic import BaseModel
-import asyncio
+from pydantic import BaseModel, ConfigDict
 from PIL import Image
 import os
 from dotenv import load_dotenv
-import asyncio
 from openai import AsyncOpenAI
 from typing import Any, TYPE_CHECKING, Dict
 from autogen_core import (
@@ -14,9 +12,8 @@ from autogen_core import (
     MessageContext,
     BaseAgent)
 
-import json
 
-from .tools import ToolCard, Tool
+from .tools import ToolCard
 
 from typing import Generic, TypeVar
 from pydantic import BaseModel
@@ -270,7 +267,7 @@ class Orchestrator(BaseAgent):
             )
             command_response:ToolCommandLLMResponse = await self.send_message(cgr, AgentId(type="CommandGenerator", key=session_id))
             try:
-                parsed_arg = json.loads(command_response.argument)
+                parsed_arg = command_response.argument
                 to_client_queue.put_nowait(UserResponse(
                     type="ToolRequest",
                     session_id=session_id, 
@@ -663,12 +660,18 @@ Remember: Your <argument> field MUST be valid json object"""
                     {"type": "text", "text": query_prompt},
                 ]
             }]
+        
         reqd_command_type = message.reqd_type
+        class ToolCommandLLMResponse_Generic(ToolCommandLLMResponse[reqd_command_type]):
+            model_config = ConfigDict(title="ToolCommandLLMResponse_Generic")
+        ToolCommandLLMResponse_Generic.model_rebuild()
+
+        
         start_time = datetime.now()
         completion = await client.beta.chat.completions.parse(
             model=os.getenv("OTOOLS_MODEL"),
             messages=input,
-            response_format=ToolCommandLLMResponse[reqd_command_type])
+            response_format=ToolCommandLLMResponse_Generic)
         logger.info(f"Command generation took {datetime.now() - start_time}")
         llm_response = completion.choices[0].message.parsed
         llm_logger.debug(f"[CommandGenerator] LLM response: {llm_response}")
