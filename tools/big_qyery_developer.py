@@ -37,7 +37,7 @@ tool_card = ToolCard(
     user_metadata={},
     demo_input=[
         BQDevRequest(
-            program_description="""A BigQuery SQL query that selects all users from the users dataset. Dataset is named `project.dataset.users` and its DDL is as follows:
+            query_description="""A BigQuery SQL query that selects all users from the users dataset. Dataset is named `project.dataset.users` and its DDL is as follows:
             CREATE TABLE `project.dataset.users` (
               `user_id` INT64,
               `user_name` STRING,
@@ -47,7 +47,7 @@ tool_card = ToolCard(
             """
         ),
         BQDevRequest(
-            program_description=""""A BigQuery SQL query that retrieves the top 5 countries by total sales from the sales dataset. Dataset is named `project.dataset.sales
+            query_description=""""A BigQuery SQL query that retrieves the top 5 countries by total sales from the sales dataset. Dataset is named `project.dataset.sales
             And its DDL is as follows:
             CREATE TABLE `project.dataset.sales` (
               `sale_id` INT64,
@@ -73,15 +73,11 @@ class BigQueryDeveloperTool(Tool):
 
     async def run(self, inputs: BQDevRequest) -> BQDevResponse:
         client = AsyncOpenAI(api_key=os.getenv("OPENROUTER_API_KEY"), base_url=os.getenv("OPENROUTER_BASE_PATH"))
-        persona_prompt  = f"Act as a BigQuery developer."
         prompt = f"""Write a BigQuery SQL query based on the following description. Ensure the query is syntactically correct and can be executed in a BigQuery environment. 
         Output only the query without any explanation or additional text.
         Description: {inputs.query_description}"""
-        input=[
-            {"role": "developer","content": [{"type": "text", "text": persona_prompt}]},
-            {"role": "user","content": [{"type": "text", "text": prompt}]}
-            ]
-        response = client.responses.create(
+        
+        response = await client.responses.create(
             model="gpt-5-codex",
             input=prompt
         )

@@ -9,24 +9,29 @@ from tools.generalist import GeneralistTool
 from tools.api_caller_tool import APICallerTool
 from tools.news_api_tool import NewsAPITool
 from tools.critic_tool import CriticTool
+from tools.code_runner import PythonCodeRunnerTool
+from tools.hacker_news_bq import HackerNewsBigQueryCallerTool
+from tools.python_developr import PythonDeveloperTool
+from tools.big_qyery_developer import BigQueryDeveloperTool
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
 
 async def m():
         runtime = Runtime()
-        
-        runtime.register_tool("WikipediaSearchTool", WikipediaSearch)
-        runtime.register_tool("SearchEngineTool", SearchEngineTool)
-        runtime.register_tool("PageContentExtractionTool", PageContentExtractionTool)
-        runtime.register_tool("NewsAPITool", NewsAPITool)
+
+        runtime.register_tool("HackerNewsBigQueryCallerTool", HackerNewsBigQueryCallerTool)
+        runtime.register_tool("PythonCodeRunnerTool", PythonCodeRunnerTool)
         runtime.register_tool("GeneralistTool", GeneralistTool)
-        runtime.register_tool("APICallerTool", APICallerTool)
         runtime.register_tool("CriticTool", CriticTool)
+        runtime.register_tool("PythonDeveloperTool", PythonDeveloperTool)
+        runtime.register_tool("BigQueryDeveloperTool", BigQueryDeveloperTool)
+        
         
         await runtime.start()
-        sid = await runtime.send_message(UserRequest(message="Describe picture",
+        sid = await runtime.send_message(UserRequest(message="What is the optimal hour to post on Hacker News to get the most upvotes?",
                                                files=[],
                                                max_steps=10))
         async for msg in runtime.stream(sid):
